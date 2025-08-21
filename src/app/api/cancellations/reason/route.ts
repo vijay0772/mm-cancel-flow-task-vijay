@@ -6,16 +6,40 @@ function isUuid(v: unknown): v is string {
 }
 
 function originAllowed(req: Request) {
+  const allowedEnv = process.env.NEXT_PUBLIC_APP_ORIGIN || ''
+  if (!allowedEnv) return true
+
+  const allowedList = allowedEnv
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+
   const origin = req.headers.get('origin') || ''
-  const allowed = process.env.NEXT_PUBLIC_APP_ORIGIN || ''
-  if (!allowed) return true
-  try {
-    const o = new URL(origin)
-    const a = new URL(allowed)
-    return o.origin === a.origin
-  } catch {
-    return false
+  if (origin) {
+    try {
+      const o = new URL(origin)
+      for (const a of allowedList) {
+        const au = new URL(a)
+        if (o.origin === au.origin) return true
+      }
+    } catch {
+      // fall through
+    }
   }
+
+  const host = req.headers.get('host') || ''
+  if (host) {
+    for (const a of allowedList) {
+      try {
+        const au = new URL(a)
+        if (host === au.host) return true
+      } catch {
+        // ignore malformed allowed entries
+      }
+    }
+  }
+
+  return false
 }
 
 type ReasonPayload = {

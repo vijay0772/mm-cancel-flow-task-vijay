@@ -1,130 +1,127 @@
-# Migrate Mate - Subscription Cancellation Flow Challenge
-
-## Overview
-
-Convert an existing Figma design into a fully-functional subscription-cancellation flow for Migrate Mate. This challenge tests your ability to implement pixel-perfect UI, handle complex business logic, and maintain security best practices.
-
-## Objective
-
-Implement the Figma-designed cancellation journey exactly on mobile + desktop, persist outcomes securely, and instrument the A/B downsell logic.
-
-## What's Provided
-
-This repository contains:
-- ✅ Next.js + TypeScript + Tailwind scaffold
-- ✅ `seed.sql` with users table (25/29 USD plans) and empty cancellations table
-- ✅ Local Supabase configuration for development
-- ✅ Basic Supabase client setup in `src/lib/supabase.ts`
-
-## Tech Stack (Preferred)
-
-- **Next.js** with App Router
-- **React** with TypeScript
-- **Tailwind CSS** for styling
-- **Supabase** (Postgres + Row-Level Security)
-
-> **Alternative stacks allowed** if your solution:
-> 1. Runs with `npm install && npm run dev`
-> 2. Persists to a Postgres-compatible database
-> 3. Enforces table-level security
-
-## Must-Have Features
-
-### 1. Progressive Flow (Figma Design)
-- Implement the exact cancellation journey from provided Figma
-- Ensure pixel-perfect fidelity on both mobile and desktop
-- Handle all user interactions and state transitions
-
-### 2. Deterministic A/B Testing (50/50 Split)
-- **On first entry**: Assign variant via cryptographically secure RNG
-- **Persist** variant to `cancellations.downsell_variant` field
-- **Reuse** variant on repeat visits (never re-randomize)
-
-**Variant A**: No downsell screen
-**Variant B**: Show "$10 off" offer
-- Price $25 → $15, Price $29 → $19
-- **Accept** → Log action, take user back to profile page (NO ACTUAL PAYMENT PROCESSING REQUIRED)
-- **Decline** → Continue to reason selection in flow
-
-### 3. Data Persistence
-- Mark subscription as `pending_cancellation` in database
-- Create cancellation record with:
-  - `user_id`
-  - `downsell_variant` (A or B)
-  - `reason` (from user selection)
-  - `accepted_downsell` (boolean)
-  - `created_at` (timestamp)
-
-### 4. Security Requirements
-- **Row-Level Security (RLS)** policies
-- **Input validation** on all user inputs
-- **CSRF/XSS protection**
-- Secure handling of sensitive data
-
-### 5. Reproducible Setup
-- `npm run db:setup` creates schema and seed data (local development)
-- Clear documentation for environment setup
-
-## Out of Scope
-
-- **Payment processing** - Stub with comments only
-- **User authentication** - Use mock user data
-- **Email notifications** - Not required
-- **Analytics tracking** - Focus on core functionality
-
-## Getting Started
-
-1. **Clone this repository** `git clone [repo]`
-2. **Install dependencies**: `npm install`
-3. **Set up local database**: `npm run db:setup`
-4. **Start development**: `npm run dev`
-
-## Database Schema
-
-The `seed.sql` file provides a **starting point** with:
-- `users` table with sample users
-- `subscriptions` table with $25 and $29 plans
-- `cancellations` table (minimal structure - **you'll need to expand this**)
-- Basic RLS policies (enhance as needed)
-
-### Important: Schema Design Required
-
-The current `cancellations` table is intentionally minimal. You'll need to:
-- **Analyze the cancellation flow requirements** from the Figma design
-- **Design appropriate table structure(s)** to capture all necessary data
-- **Consider data validation, constraints, and relationships**
-- **Ensure the schema supports the A/B testing requirements**
-
-## Evaluation Criteria
-
-- **Functionality (40%)**: Feature completeness and correctness
-- **Code Quality (25%)**: Clean, maintainable, well-structured code
-- **Pixel/UX Fidelity (15%)**: Accuracy to Figma design
-- **Security (10%)**: Proper RLS, validation, and protection
-- **Documentation (10%)**: Clear README and code comments
-
-## Deliverables
-
-1. **Working implementation** in this repository
-2. **NEW One-page README.md (replace this)** (≤600 words) explaining:
-   - Architecture decisions
-   - Security implementation
-   - A/B testing approach
-3. **Clean commit history** with meaningful messages
-
-## Timeline
-
-Submit your solution within **72 hours** of receiving this repository.
-
-## AI Tooling
-
-Using Cursor, ChatGPT, Copilot, etc. is **encouraged**. Use whatever accelerates your development—just ensure you understand the code and it runs correctly.
-
-## Questions?
-
-Review the challenge requirements carefully. If you have questions about specific implementation details, make reasonable assumptions and document them in your README.
-
----
-
-**Good luck!** We're excited to see your implementation.
 # mm-cancel-flow-task-vijay
+
+## What I built
+I implemented a complete subscription cancellation flow for Migrate Mate. It’s pixel‑perfect on desktop and mobile, includes deterministic A/B testing, and persists everything securely to Supabase.
+
+### Highlights
+- Progressive, branched journey (found‑job vs still‑looking) with the exact spacing/visuals
+- Deterministic A/B downsell (50/50) assigned server‑side and reused on return
+- Server endpoints that mark a subscription `pending_cancellation` and persist the latest cancellation `reason` + `accepted_downsell`
+- Secure server‑only Supabase calls (service role) + basic CSRF Origin check + UUID validation
+- Redux Toolkit for state; cookie persistence + SSR hydration to avoid hydration mismatches
+- I deliberately use plain `<img>` to match the provided designs exactly
+- Tiny toast system to show one‑line success/error messages (top‑right)
+
+## Tech I used
+- Next.js (App Router), React, TypeScript
+- Tailwind CSS
+- Redux Toolkit
+- Supabase (Postgres) with RLS
+
+## How the project is organized
+- `src/app/`
+  - `found-job/` – Step 1 → Step 2 → branches (mm‑yes/mm‑no) → final screens
+  - `still-looking/` – Offer → usage → reason → detail pages → final screen
+  - `api/cancellations/start` – assigns A/B, creates `cancellations` row, sets `pending_cancellation`
+  - `api/cancellations/reason` – finalizes (reason + accepted_downsell)
+- `src/store/` – Redux slices + cookie persistence middleware
+- `src/lib/supabase.ts` – Supabase anon client + service‑role client (server only)
+- `src/lib/cancelApi.ts` – Client helpers that call my API routes and show toasts
+- `src/lib/toast.tsx` – Minimal toast container + `showToast()`
+
+## My A/B approach
+- On first entry, the server assigns `A` or `B` (secure RNG) and stores it in `cancellations.downsell_variant`.
+- I reuse the same variant on subsequent visits and set an httpOnly cookie (`downsell_variant`).
+- For B, I only change the numbers in the offer (e.g., $25→$15, $29→$19); I don’t touch layout.
+
+## Security in this app
+- All DB writes run server‑side with `SUPABASE_SERVICE_ROLE_KEY`.
+- I check the request `Origin` against `NEXT_PUBLIC_APP_ORIGIN`.
+- I validate UUIDs/booleans in payloads.
+- RLS is enabled for `users`, `subscriptions`, `cancellations` in `seed.sql`.
+- `downsell_variant` is httpOnly (SameSite=Lax).
+
+## Cookies & state
+- Client cookies for continuity: `hasFoundJob`, `cancelStep1`, `cancelStep2`, `cancelStep3`.
+- I hydrate Redux on the server from cookies to avoid hydration mismatches.
+- The A/B variant is returned from `/api/cancellations/start` and also stored as an httpOnly cookie.
+
+## Environment variables (.env.local)
+Create a `.env.local` file in the project root:
+
+```
+# Origin allow‑list for CSRF
+NEXT_PUBLIC_APP_ORIGIN=http://localhost:3000
+
+# Supabase project (the one you seed with seed.sql)
+NEXT_PUBLIC_SUPABASE_URL=<your-supabase-url>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
+SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+
+# Demo wiring for UI → API (these IDs must exist in your DB)
+NEXT_PUBLIC_DEMO_USER_ID=<uuid-from-users-table>
+NEXT_PUBLIC_DEMO_SUBSCRIPTION_ID=<uuid-from-subscriptions-table-for-that-user>
+```
+
+`.env.local` is ignored by git.
+
+## Database setup
+Run the SQL in `seed.sql` on your Supabase project. It:
+- Creates `users`, `subscriptions`, `cancellations`
+- Enables RLS policies
+- Seeds a few users and active subscriptions ($25 and $29 plans)
+
+My API routes and UI helpers assume the two `NEXT_PUBLIC_DEMO_*` IDs point to real rows in this project.
+
+## How to run it locally
+1) Install dependencies
+```
+npm install
+```
+
+2) Create `.env.local` (see above) and make sure your Supabase project has the `seed.sql` schema/data
+
+3) Start dev server
+```
+npm run dev
+```
+- Go to `http://localhost:3000`
+- Open the modal on the profile page to enter the flow
+- Entry pages POST `/api/cancellations/start` automatically
+- Final screens POST `/api/cancellations/reason`
+- You’ll see a green toast on success and a red toast on failure
+
+4) (Optional) Curl tests
+- Start:
+```
+curl -i -X POST http://localhost:3000/api/cancellations/start \
+  -H 'Origin: http://localhost:3000' \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"<real-user-uuid>","subscription_id":"<real-subscription-uuid>"}'
+```
+- Finalize:
+```
+curl -i -X POST http://localhost:3000/api/cancellations/reason \
+  -H 'Origin: http://localhost:3000' \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"<real-user-uuid>","subscription_id":"<real-subscription-uuid>","reason":"Too expensive","accepted_downsell":false}'
+```
+
+## Build
+```
+npm run build
+```
+I intentionally use `<img>` to keep the visuals exactly like the designs, so Next may warn about using `next/image`—that’s expected.
+
+## What I delivered (high‑level)
+- UI: all screens for both branches, with mobile/desktop parity, back/progress/close behavior as specified
+- State: Redux slices + cookie middleware, SSR hydration to avoid mismatches
+- Backend:
+  - `/api/cancellations/start` → origin + payload validation → assign A/B → insert `cancellations` → set `pending_cancellation` → set httpOnly cookie
+  - `/api/cancellations/reason` → origin + payload validation → update latest `cancellations` row with reason + acceptance
+- Security: origin allow‑list, UUID checks, RLS, httpOnly cookie for A/B
+- QA: one‑line toasts on success/failure (no layout changes)
+
+## Notes from me
+- To test different IDs without touching code, just change `NEXT_PUBLIC_DEMO_USER_ID` and `NEXT_PUBLIC_DEMO_SUBSCRIPTION_ID` and restart `npm run dev`.
+- In production, keep your service role key server‑only and set a strict `NEXT_PUBLIC_APP_ORIGIN`.

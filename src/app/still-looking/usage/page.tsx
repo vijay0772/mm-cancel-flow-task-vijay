@@ -13,7 +13,7 @@ export default function StillLookingUsagePage() {
 	const Pill = ({ label, selected, onClick }: { label: string; selected: boolean; onClick: () => void }) => (
 		<button
 			onClick={onClick}
-			className={`h-10 rounded-md border px-7 text-[12px] font-semibold transition-colors ${
+			className={`h-10 rounded-md border px-3 md:px-7 text-[11px] md:text-[12px] leading-none whitespace-nowrap font-semibold transition-colors ${
 				selected ? "bg-[#7C5CFF] text-white border-transparent" : "bg-[#F6F6F6] text-[#62605C] border-gray-300 hover:bg-gray-50"
 			}`}
 		>
@@ -86,7 +86,7 @@ export default function StillLookingUsagePage() {
 						{/* Q1 */}
 						<div className="mt-6">
 							<p className="text-[14px] text-[#62605C] mb-2">How many roles did you apply for through Migrate Mate?</p>
-							<div className="grid grid-cols-4 gap-4">
+							<div className="grid grid-cols-4 gap-2 md:gap-4">
 								<Pill label="0" selected={q1 === "0"} onClick={() => setQ1("0")} />
 								<Pill label="1–5" selected={q1 === "1-5"} onClick={() => setQ1("1-5")} />
 								<Pill label="6–20" selected={q1 === "6-20"} onClick={() => setQ1("6-20")} />
@@ -97,7 +97,7 @@ export default function StillLookingUsagePage() {
 						{/* Q2 */}
 						<div className="mt-6">
 							<p className="text-[14px] text-[#62605C] mb-2">How many companies did you email directly?</p>
-							<div className="grid grid-cols-4 gap-4">
+							<div className="grid grid-cols-4 gap-2 md:gap-4">
 								<Pill label="0" selected={q2 === "0"} onClick={() => setQ2("0")} />
 								<Pill label="1–5" selected={q2 === "1-5"} onClick={() => setQ2("1-5")} />
 								<Pill label="6–20" selected={q2 === "6-20"} onClick={() => setQ2("6-20")} />
@@ -108,7 +108,7 @@ export default function StillLookingUsagePage() {
 						{/* Q3 */}
 						<div className="mt-6">
 							<p className="text-[14px] text-[#62605C] mb-2">How many different companies did you interview with?</p>
-							<div className="grid grid-cols-4 gap-4">
+							<div className="grid grid-cols-4 gap-2 md:gap-4">
 								<Pill label="0" selected={q3 === "0"} onClick={() => setQ3("0")} />
 								<Pill label="1–2" selected={q3 === "1-2"} onClick={() => setQ3("1-2")} />
 								<Pill label="3–5" selected={q3 === "3-5"} onClick={() => setQ3("3-5")} />
